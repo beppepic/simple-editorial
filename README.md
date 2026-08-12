@@ -1,0 +1,42 @@
+# Simple Editorial
+
+Simple Editorial is a minimal Obsidian plugin for lightweight manuscript editing on iPhone and macOS. It uses only ordinary Markdown and native Obsidian syntax.
+
+## Features
+
+- **Toggle Comment Mode**: with an empty cursor, the first text you type is automatically wrapped as an Obsidian comment: `%% comment %%`. Comment Mode stays on while you move between Markdown notes and resets when Obsidian or the plugin reloads.
+- **Insert comment**: inserts `%%  %%` at an empty cursor and places the cursor between the markers.
+- **Toggle strike**: wraps or unwraps selected text with `~~` markers.
+- **Editorial styling**: comments and strikethrough use `#C64A3D` in the editor.
+
+Comment Mode does not lock the document. Selections, deletion, replacement, Return, paste, cut, drag-and-drop, undo, redo, and other normal Obsidian editing remain unchanged. Typing inside an existing comment also remains normal.
+
+## Mobile Toolbar
+
+After enabling the plugin, add its commands from:
+
+**Settings → Mobile → Configure Mobile Toolbar → More Toolbar Options**
+
+The commands may appear under **More Toolbar Options** rather than **Add a command** in current Obsidian mobile releases.
+
+## Beta installation with BRAT
+
+1. Install and enable BRAT from Obsidian Community Plugins.
+2. Open **Settings → BRAT**.
+3. Choose **Add Beta plugin**.
+4. Enter `beppepic/simple-editorial`.
+5. Enable **Simple Editorial** under **Settings → Community plugins**.
+
+This beta is intended for direct testing and is not submitted to the official Obsidian Community Plugins catalog.
+
+## Development
+
+```bash
+pnpm install
+pnpm test
+pnpm build
+```
+
+## License
+
+MIT

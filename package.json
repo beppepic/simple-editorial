@@ -1,0 +1,29 @@
+{
+  "name": "simple-editorial",
+  "version": "0.1.0-beta.1",
+  "description": "A minimal editorial markup plugin for writers using Obsidian.",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc --noEmit && node esbuild.config.mjs production",
+    "test": "node --import tsx --test tests/editorial-core.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "obsidian",
+    "editorial",
+    "comments",
+    "writing"
+  ],
+  "author": "Beppe",
+  "license": "MIT",
+  "devDependencies": {
+    "@codemirror/state": "6.5.0",
+    "@codemirror/view": "6.38.6",
+    "@types/node": "^22.15.17",
+    "esbuild": "0.25.5",
+    "obsidian": "latest",
+    "tsx": "^4.20.6",
+    "typescript": "^5.8.3"
+  }
+}

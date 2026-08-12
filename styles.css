@@ -1,0 +1,32 @@
+:root {
+  --simple-editorial-color: #c64a3d;
+}
+
+.markdown-source-view.mod-cm6 .cm-line:not(.HyperMD-codeblock) .cm-comment,
+.markdown-source-view.mod-cm6 .cm-strikethrough,
+.markdown-source-view.mod-cm6 .cm-formatting-strikethrough {
+  color: var(--simple-editorial-color);
+}
+
+.markdown-source-view.mod-cm6 .cm-strikethrough {
+  text-decoration-color: var(--simple-editorial-color);
+}
+
+.simple-editorial-mode-panel {
+  align-items: center;
+  background: var(--background-primary);
+  border-bottom: 1px solid color-mix(in srgb, var(--simple-editorial-color) 65%, transparent);
+  color: var(--simple-editorial-color);
+  display: flex;
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+  justify-content: center;
+  letter-spacing: 0.08em;
+  min-height: 24px;
+  padding: 2px 8px;
+  text-transform: uppercase;
+}
+
+.simple-editorial-comment-mode .cm-cursor {
+  border-left-color: var(--simple-editorial-color);
+}

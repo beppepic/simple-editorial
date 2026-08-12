@@ -1,0 +1,9 @@
+{
+  "id": "simple-editorial",
+  "name": "Simple Editorial",
+  "version": "0.1.0-beta.1",
+  "minAppVersion": "1.13.0",
+  "description": "A minimal editorial markup plugin for writers using Obsidian.",
+  "author": "Beppe",
+  "isDesktopOnly": false
+}
