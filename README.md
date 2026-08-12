@@ -4,7 +4,7 @@ Simple Editorial is a minimal Obsidian plugin for lightweight manuscript editing
 
 ## Features
 
-- **Persistent Comment Mode toggle**: the same always-visible control is available on iPhone and macOS, with a mobile-adapted layout. With an empty cursor, the first text you type is automatically wrapped as an Obsidian comment: `%% comment %%`. Comment Mode stays on while you move between Markdown notes and resets when Obsidian or the plugin reloads.
+- **Persistent Comment Mode toggle**: the same view-header action is available on iPhone and macOS. Its icon is neutral when Comment Mode is off and editorial red when it is on. With an empty cursor, the first text you type is automatically wrapped as an Obsidian comment: `%% comment %%`. Comment Mode stays on while you move between Markdown notes and resets when Obsidian or the plugin reloads.
 - **Insert comment**: inserts `%%  %%` at an empty cursor and places the cursor between the markers.
 - **Editorial styling**: comments and Obsidian's native strikethrough use `#C64A3D` in the editor.
 

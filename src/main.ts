@@ -10,15 +10,10 @@ import {
 } from "./comment-mode";
 import { protectEditorSelection } from "./ui-events";
 
-interface ModeToolbar {
-  root: HTMLElement;
-  button: HTMLButtonElement;
-}
-
 export default class SimpleEditorialPlugin extends Plugin {
   private commentModeEnabled = false;
   private commentMode!: CommentModeExtension;
-  private modeToolbars = new Map<MarkdownView, ModeToolbar>();
+  private modeActions = new Map<MarkdownView, HTMLElement>();
 
   onload(): void {
     this.commentMode = createCommentModeExtension({
@@ -55,8 +50,8 @@ export default class SimpleEditorialPlugin extends Plugin {
 
   onunload(): void {
     this.commentModeEnabled = false;
-    for (const [view] of this.modeToolbars) this.removeModeToolbar(view);
-    this.modeToolbars.clear();
+    for (const [view] of this.modeActions) this.removeModeAction(view);
+    this.modeActions.clear();
   }
 
   private insertComment(editor: Editor): void {
@@ -104,51 +99,44 @@ export default class SimpleEditorialPlugin extends Plugin {
       this.syncModeToView(leaf.view);
     }
 
-    for (const [view] of this.modeToolbars) {
-      if (!liveViews.has(view)) this.removeModeToolbar(view);
+    for (const [view] of this.modeActions) {
+      if (!liveViews.has(view)) this.removeModeAction(view);
     }
   }
 
   private syncModeToView(view: MarkdownView): void {
     const editorView = this.getEditorView(view);
     if (editorView) this.commentMode.setEnabled(editorView, this.commentModeEnabled);
-    const toolbar = this.ensureModeToolbar(view);
-    toolbar.button.textContent = `COMMENT MODE ${this.commentModeEnabled ? "ON" : "OFF"}`;
-    toolbar.button.setAttribute("aria-pressed", String(this.commentModeEnabled));
-    toolbar.root.classList.toggle("is-enabled", this.commentModeEnabled);
+    const action = this.ensureModeAction(view);
+    const state = this.commentModeEnabled ? "ON" : "OFF";
+    action.setAttribute("aria-label", `Simple Editorial: Comment Mode ${state}`);
+    action.setAttribute("aria-pressed", String(this.commentModeEnabled));
+    action.setAttribute("data-tooltip-position", "bottom");
+    action.classList.toggle("is-enabled", this.commentModeEnabled);
   }
 
-  private ensureModeToolbar(view: MarkdownView): ModeToolbar {
-    const existing = this.modeToolbars.get(view);
-    if (existing?.root.isConnected) return existing;
-    if (existing) this.modeToolbars.delete(view);
+  private ensureModeAction(view: MarkdownView): HTMLElement {
+    const existing = this.modeActions.get(view);
+    if (existing?.isConnected) return existing;
+    if (existing) this.modeActions.delete(view);
 
-    const toolbar = view.containerEl.ownerDocument.createElement("div");
-    toolbar.className = "simple-editorial-mode-toolbar";
-
-    const button = view.containerEl.ownerDocument.createElement("button");
-    button.className = "simple-editorial-mode-toggle";
-    button.type = "button";
-    button.setAttribute("aria-label", "Toggle Simple Editorial Comment Mode");
-    button.addEventListener("pointerdown", protectEditorSelection);
-    button.addEventListener("click", (event) => {
-      protectEditorSelection(event);
-      this.toggleCommentMode(view);
-    });
-
-    toolbar.appendChild(button);
-    view.containerEl.classList.add("simple-editorial-toolbar-active");
-    view.containerEl.insertBefore(toolbar, view.contentEl);
-
-    const result = { root: toolbar, button };
-    this.modeToolbars.set(view, result);
-    return result;
+    const action = view.addAction(
+      "message-square-more",
+      "Simple Editorial: Comment Mode OFF",
+      (event) => {
+        protectEditorSelection(event);
+        this.toggleCommentMode(view);
+      },
+    );
+    action.classList.add("simple-editorial-mode-action");
+    action.addEventListener("pointerdown", protectEditorSelection);
+    this.modeActions.set(view, action);
+    return action;
   }
 
-  private removeModeToolbar(view: MarkdownView): void {
-    this.modeToolbars.get(view)?.root.remove();
-    this.modeToolbars.delete(view);
-    view.containerEl.classList.remove("simple-editorial-toolbar-active");
+  private removeModeAction(view: MarkdownView): void {
+    this.modeActions.get(view)?.remove();
+    this.modeActions.delete(view);
   }
 
   private getEditorView(view: MarkdownView): EditorView | null {
