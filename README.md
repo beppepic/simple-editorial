@@ -4,20 +4,19 @@ Simple Editorial is a minimal Obsidian plugin for lightweight manuscript editing
 
 ## Features
 
-- **Toggle Comment Mode**: with an empty cursor, the first text you type is automatically wrapped as an Obsidian comment: `%% comment %%`. Comment Mode stays on while you move between Markdown notes and resets when Obsidian or the plugin reloads.
+- **Persistent Comment Mode toggle**: the same always-visible control is available on iPhone and macOS, with a mobile-adapted layout. With an empty cursor, the first text you type is automatically wrapped as an Obsidian comment: `%% comment %%`. Comment Mode stays on while you move between Markdown notes and resets when Obsidian or the plugin reloads.
 - **Insert comment**: inserts `%%  %%` at an empty cursor and places the cursor between the markers.
-- **Toggle strike**: wraps or unwraps selected text with `~~` markers.
-- **Editorial styling**: comments and strikethrough use `#C64A3D` in the editor.
+- **Editorial styling**: comments and Obsidian's native strikethrough use `#C64A3D` in the editor.
 
 Comment Mode does not lock the document. Selections, deletion, replacement, Return, paste, cut, drag-and-drop, undo, redo, and other normal Obsidian editing remain unchanged. Typing inside an existing comment also remains normal.
 
 ## Mobile Toolbar
 
-After enabling the plugin, add its commands from:
+The persistent toggle requires no setup. To add the optional **Insert comment** command to Obsidian's Mobile Toolbar, open:
 
-**Settings → Mobile → Configure Mobile Toolbar → More Toolbar Options**
+**Settings → Mobile → Manage toolbar options → Add global command**
 
-The commands may appear under **More Toolbar Options** rather than **Add a command** in current Obsidian mobile releases.
+Search for **Simple Editorial: Insert comment** and add it to the toolbar.
 
 ## Beta installation with BRAT
 

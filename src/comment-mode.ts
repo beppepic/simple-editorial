@@ -1,5 +1,5 @@
 import { Annotation, Extension, StateEffect, StateField, Transaction } from "@codemirror/state";
-import { EditorView, Panel, showPanel } from "@codemirror/view";
+import { EditorView } from "@codemirror/view";
 import { planCommentModeInput } from "./editorial-core";
 
 export interface CommentModeController {
@@ -9,15 +9,6 @@ export interface CommentModeController {
 export interface CommentModeExtension {
   extension: Extension;
   setEnabled(view: EditorView, enabled: boolean): void;
-}
-
-function modePanel(): Panel {
-  const dom = document.createElement("div");
-  dom.className = "simple-editorial-mode-panel";
-  dom.textContent = "Comment mode";
-  dom.setAttribute("role", "status");
-  dom.setAttribute("aria-label", "Simple Editorial Comment Mode is on");
-  return { dom, top: true };
 }
 
 export function createCommentModeExtension(
@@ -74,7 +65,6 @@ export function createCommentModeExtension(
   const extension: Extension = [
     mode,
     inputHandler,
-    showPanel.from(mode, (enabled) => (enabled ? modePanel : null)),
     EditorView.editorAttributes.compute([mode], (state) =>
       ({
         class: state.field(mode) ? "simple-editorial-comment-mode" : "",

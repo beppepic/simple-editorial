@@ -3,16 +3,22 @@ import { EditorView } from "@codemirror/view";
 import {
   buildCommentEdit,
   findCommentBodyAt,
-  planStrikeToggle,
 } from "./editorial-core";
 import {
   CommentModeExtension,
   createCommentModeExtension,
 } from "./comment-mode";
+import { protectEditorSelection } from "./ui-events";
+
+interface ModeToolbar {
+  root: HTMLElement;
+  button: HTMLButtonElement;
+}
 
 export default class SimpleEditorialPlugin extends Plugin {
   private commentModeEnabled = false;
   private commentMode!: CommentModeExtension;
+  private modeToolbars = new Map<MarkdownView, ModeToolbar>();
 
   onload(): void {
     this.commentMode = createCommentModeExtension({
@@ -36,23 +42,21 @@ export default class SimpleEditorialPlugin extends Plugin {
       },
     });
 
-    this.addCommand({
-      id: "toggle-strike",
-      name: "Toggle strike",
-      icon: "strikethrough",
-      editorCallback: (editor) => this.toggleStrike(editor),
-    });
-
     this.registerEvent(
       this.app.workspace.on("active-leaf-change", () => {
-        const view = this.app.workspace.getActiveViewOfType(MarkdownView);
-        if (view) this.syncModeToView(view);
+        this.syncModeToAllViews();
       }),
     );
+    this.registerEvent(
+      this.app.workspace.on("layout-change", () => this.syncModeToAllViews()),
+    );
+    this.app.workspace.onLayoutReady(() => this.syncModeToAllViews());
   }
 
   onunload(): void {
     this.commentModeEnabled = false;
+    for (const [view] of this.modeToolbars) this.removeModeToolbar(view);
+    this.modeToolbars.clear();
   }
 
   private insertComment(editor: Editor): void {
@@ -84,32 +88,6 @@ export default class SimpleEditorialPlugin extends Plugin {
     );
   }
 
-  private toggleStrike(editor: Editor): void {
-    if (!editor.somethingSelected()) {
-      new Notice("Select text before toggling strikethrough.");
-      return;
-    }
-
-    const from = editor.getCursor("from");
-    const to = editor.getCursor("to");
-    const edit = planStrikeToggle(
-      editor.getValue(),
-      editor.posToOffset(from),
-      editor.posToOffset(to),
-    );
-    if (!edit) return;
-
-    editor.replaceRange(
-      edit.insert,
-      editor.offsetToPos(edit.from),
-      editor.offsetToPos(edit.to),
-    );
-    editor.setSelection(
-      editor.offsetToPos(edit.selectionFrom),
-      editor.offsetToPos(edit.selectionTo),
-    );
-  }
-
   private moveCursorOutsideComment(editor: Editor): void {
     if (editor.somethingSelected()) return;
 
@@ -119,14 +97,58 @@ export default class SimpleEditorialPlugin extends Plugin {
   }
 
   private syncModeToAllViews(): void {
+    const liveViews = new Set<MarkdownView>();
     for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
-      if (leaf.view instanceof MarkdownView) this.syncModeToView(leaf.view);
+      if (!(leaf.view instanceof MarkdownView)) continue;
+      liveViews.add(leaf.view);
+      this.syncModeToView(leaf.view);
+    }
+
+    for (const [view] of this.modeToolbars) {
+      if (!liveViews.has(view)) this.removeModeToolbar(view);
     }
   }
 
   private syncModeToView(view: MarkdownView): void {
     const editorView = this.getEditorView(view);
     if (editorView) this.commentMode.setEnabled(editorView, this.commentModeEnabled);
+    const toolbar = this.ensureModeToolbar(view);
+    toolbar.button.textContent = `COMMENT MODE ${this.commentModeEnabled ? "ON" : "OFF"}`;
+    toolbar.button.setAttribute("aria-pressed", String(this.commentModeEnabled));
+    toolbar.root.classList.toggle("is-enabled", this.commentModeEnabled);
+  }
+
+  private ensureModeToolbar(view: MarkdownView): ModeToolbar {
+    const existing = this.modeToolbars.get(view);
+    if (existing?.root.isConnected) return existing;
+    if (existing) this.modeToolbars.delete(view);
+
+    const toolbar = view.containerEl.ownerDocument.createElement("div");
+    toolbar.className = "simple-editorial-mode-toolbar";
+
+    const button = view.containerEl.ownerDocument.createElement("button");
+    button.className = "simple-editorial-mode-toggle";
+    button.type = "button";
+    button.setAttribute("aria-label", "Toggle Simple Editorial Comment Mode");
+    button.addEventListener("pointerdown", protectEditorSelection);
+    button.addEventListener("click", (event) => {
+      protectEditorSelection(event);
+      this.toggleCommentMode(view);
+    });
+
+    toolbar.appendChild(button);
+    view.containerEl.classList.add("simple-editorial-toolbar-active");
+    view.containerEl.insertBefore(toolbar, view.contentEl);
+
+    const result = { root: toolbar, button };
+    this.modeToolbars.set(view, result);
+    return result;
+  }
+
+  private removeModeToolbar(view: MarkdownView): void {
+    this.modeToolbars.get(view)?.root.remove();
+    this.modeToolbars.delete(view);
+    view.containerEl.classList.remove("simple-editorial-toolbar-active");
   }
 
   private getEditorView(view: MarkdownView): EditorView | null {

@@ -5,8 +5,8 @@ import {
   buildCommentEdit,
   findCommentBodyAt,
   planCommentModeInput,
-  planStrikeToggle,
 } from "../src/editorial-core";
+import { protectEditorSelection } from "../src/ui-events";
 
 function applyEdit(document: string, edit: { from: number; to: number; insert: string }): string {
   return document.slice(0, edit.from) + edit.insert + document.slice(edit.to);
@@ -95,38 +95,19 @@ test("CodeMirror classifies composition as typing and paste as non-typing", () =
   assert.equal(paste.isUserEvent("input.type"), false);
 });
 
-test("wraps selected text in strikethrough and preserves the text selection", () => {
-  const document = "Keep remove keep";
-  const from = document.indexOf("remove");
-  const to = from + "remove".length;
-  const edit = planStrikeToggle(document, from, to);
-  assert.ok(edit);
-  assert.equal(applyEdit(document, edit), "Keep ~~remove~~ keep");
-  assert.equal(edit.selectionFrom, from + 2);
-  assert.equal(edit.selectionTo, to + 2);
-});
+test("toolbar pointer events do not reach the editor", () => {
+  let defaultPrevented = false;
+  let propagationStopped = false;
 
-test("removes selected strikethrough markers", () => {
-  const document = "Keep ~~remove~~ keep";
-  const from = document.indexOf("~~");
-  const to = document.lastIndexOf("~~") + 2;
-  const edit = planStrikeToggle(document, from, to);
-  assert.ok(edit);
-  assert.equal(applyEdit(document, edit), "Keep remove keep");
-});
+  protectEditorSelection({
+    preventDefault: () => {
+      defaultPrevented = true;
+    },
+    stopPropagation: () => {
+      propagationStopped = true;
+    },
+  });
 
-test("removes surrounding strikethrough markers when only content is selected", () => {
-  const document = "Keep ~~remove~~ keep";
-  const from = document.indexOf("remove");
-  const to = from + "remove".length;
-  const edit = planStrikeToggle(document, from, to);
-  assert.ok(edit);
-  assert.equal(applyEdit(document, edit), "Keep remove keep");
-});
-
-test("toggles multiline selections", () => {
-  const document = "first\nsecond";
-  const edit = planStrikeToggle(document, 0, document.length);
-  assert.ok(edit);
-  assert.equal(applyEdit(document, edit), "~~first\nsecond~~");
+  assert.equal(defaultPrevented, true);
+  assert.equal(propagationStopped, true);
 });
