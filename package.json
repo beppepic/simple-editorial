@@ -1,6 +1,6 @@
 {
   "name": "simple-editorial",
-  "version": "0.1.0-beta.1",
+  "version": "0.1.0-beta.2",
   "description": "A minimal editorial markup plugin for writers using Obsidian.",
   "main": "main.js",
   "type": "module",
