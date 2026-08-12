@@ -77,10 +77,6 @@ export default class SimpleEditorialPlugin extends Plugin {
     this.commentModeEnabled = !this.commentModeEnabled;
     this.syncModeToAllViews();
     if (editorView) this.commentMode.setEnabled(editorView, this.commentModeEnabled);
-
-    new Notice(
-      `Simple Editorial: Comment Mode ${this.commentModeEnabled ? "ON" : "OFF"}`,
-    );
   }
 
   private moveCursorOutsideComment(editor: Editor): void {
