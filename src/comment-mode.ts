@@ -1,4 +1,4 @@
-import { Annotation, Extension, StateEffect, StateField, Transaction } from "@codemirror/state";
+import { Annotation, Extension, Transaction } from "@codemirror/state";
 import { EditorView } from "@codemirror/view";
 import { planCommentModeInput } from "./editorial-core";
 
@@ -6,28 +6,12 @@ export interface CommentModeController {
   isEnabled(): boolean;
 }
 
-export interface CommentModeExtension {
-  extension: Extension;
-  setEnabled(view: EditorView, enabled: boolean): void;
-}
-
 export function createCommentModeExtension(
   controller: CommentModeController,
-): CommentModeExtension {
-  const setMode = StateEffect.define<boolean>();
-  const mode = StateField.define<boolean>({
-    create: () => controller.isEnabled(),
-    update(value, transaction) {
-      for (const effect of transaction.effects) {
-        if (effect.is(setMode)) return effect.value;
-      }
-      return value;
-    },
-  });
-
+): Extension {
   const inputHandler = EditorView.inputHandler.of(
     (view, from, to, text, insert): boolean => {
-      if (!view.state.field(mode)) return false;
+      if (!controller.isEnabled()) return false;
 
       const defaultTransaction = insert();
       if (!defaultTransaction.isUserEvent("input.type")) return false;
@@ -62,20 +46,12 @@ export function createCommentModeExtension(
     },
   );
 
-  const extension: Extension = [
-    mode,
-    inputHandler,
-    EditorView.editorAttributes.compute([mode], (state) =>
-      ({
-        class: state.field(mode) ? "simple-editorial-comment-mode" : "",
-      }),
-    ),
-  ];
+  const editorClass = controller.isEnabled()
+    ? "simple-editorial-editor simple-editorial-comment-mode"
+    : "simple-editorial-editor";
 
-  return {
-    extension,
-    setEnabled(view, enabled) {
-      view.dispatch({ effects: setMode.of(enabled) });
-    },
-  };
+  return [
+    inputHandler,
+    EditorView.editorAttributes.of({ class: editorClass }),
+  ];
 }

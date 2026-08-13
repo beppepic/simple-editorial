@@ -28,10 +28,15 @@ Search for **Simple Editorial: Insert comment** and add it to the toolbar.
 
 This beta is intended for direct testing and is not submitted to the official Obsidian Community Plugins catalog.
 
+## Privacy and security
+
+Simple Editorial works entirely inside the active Obsidian editor. It does not use the network, collect telemetry, require an account or payment, display ads, or access files outside the vault.
+
 ## Development
 
 ```bash
 pnpm install
+pnpm lint
 pnpm test
 pnpm build
 ```
