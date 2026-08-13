@@ -1,6 +1,11 @@
-.cm-editor.simple-editorial-editor,
-.simple-editorial-mode-action {
+.theme-light .cm-editor.simple-editorial-editor,
+.theme-light .simple-editorial-mode-action {
   --simple-editorial-color: #c64a3d;
+}
+
+.theme-dark .cm-editor.simple-editorial-editor,
+.theme-dark .simple-editorial-mode-action {
+  --simple-editorial-color: #de5e4e;
 }
 
 .cm-editor.simple-editorial-editor

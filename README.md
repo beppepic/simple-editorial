@@ -18,15 +18,21 @@ The persistent toggle requires no setup. To add the optional **Insert comment** 
 
 Search for **Simple Editorial: Insert comment** and add it to the toolbar.
 
-## Beta installation with BRAT
+## Installation
+
+Once Simple Editorial is listed in the Obsidian Community directory:
+
+1. Open **Settings → Community plugins**.
+2. Select **Browse** and search for **Simple Editorial**.
+3. Install and enable the plugin.
+
+Until then, the release can be tested with BRAT:
 
 1. Install and enable BRAT from Obsidian Community Plugins.
 2. Open **Settings → BRAT**.
 3. Choose **Add Beta plugin**.
 4. Enter `beppepic/simple-editorial`.
 5. Enable **Simple Editorial** under **Settings → Community plugins**.
-
-This beta is intended for direct testing and is not submitted to the official Obsidian Community Plugins catalog.
 
 ## Privacy and security
 

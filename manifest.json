@@ -1,7 +1,7 @@
 {
   "id": "simple-editorial",
   "name": "Simple Editorial",
-  "version": "0.1.0-beta.2",
+  "version": "1.0.0",
   "minAppVersion": "1.13.0",
   "description": "Speed up manuscript review with automatic comments and editorial styling.",
   "author": "Beppe",
