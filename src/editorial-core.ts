@@ -28,11 +28,11 @@ function isWordCharacter(character: string | undefined): boolean {
 }
 
 function isClosingPunctuation(character: string | undefined): boolean {
-  return character !== undefined && /[.,;:!?…\)\]\}”’»]/u.test(character);
+  return character !== undefined && /[.,;:!?…)\]}”’»]/u.test(character);
 }
 
 function isOpeningPunctuation(character: string | undefined): boolean {
-  return character !== undefined && /[\(\[\{“‘«]/u.test(character);
+  return character !== undefined && /[([{“‘«]/u.test(character);
 }
 
 export function findCommentRanges(document: string): CommentBodyRange[] {

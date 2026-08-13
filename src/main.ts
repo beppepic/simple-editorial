@@ -1,25 +1,20 @@
+import { Extension } from "@codemirror/state";
 import { Editor, MarkdownView, Notice, Plugin } from "obsidian";
-import { EditorView } from "@codemirror/view";
 import {
   buildCommentEdit,
   findCommentBodyAt,
 } from "./editorial-core";
-import {
-  CommentModeExtension,
-  createCommentModeExtension,
-} from "./comment-mode";
+import { createCommentModeExtension } from "./comment-mode";
 import { protectEditorSelection } from "./ui-events";
 
 export default class SimpleEditorialPlugin extends Plugin {
   private commentModeEnabled = false;
-  private commentMode!: CommentModeExtension;
+  private editorExtensions: Extension[] = [];
   private modeActions = new Map<MarkdownView, HTMLElement>();
 
   onload(): void {
-    this.commentMode = createCommentModeExtension({
-      isEnabled: () => this.commentModeEnabled,
-    });
-    this.registerEditorExtension(this.commentMode.extension);
+    this.refreshEditorExtensions();
+    this.registerEditorExtension(this.editorExtensions);
 
     this.addCommand({
       id: "insert-comment",
@@ -30,7 +25,7 @@ export default class SimpleEditorialPlugin extends Plugin {
 
     this.addCommand({
       id: "toggle-comment-mode",
-      name: "Toggle Comment Mode",
+      name: "Toggle comment mode",
       icon: "message-square-more",
       editorCallback: (_editor, view) => {
         if (view instanceof MarkdownView) this.toggleCommentMode(view);
@@ -68,15 +63,14 @@ export default class SimpleEditorialPlugin extends Plugin {
   }
 
   private toggleCommentMode(view: MarkdownView): void {
-    const editorView = this.getEditorView(view);
-
     if (this.commentModeEnabled) {
       this.moveCursorOutsideComment(view.editor);
     }
 
     this.commentModeEnabled = !this.commentModeEnabled;
+    this.refreshEditorExtensions();
+    this.app.workspace.updateOptions();
     this.syncModeToAllViews();
-    if (editorView) this.commentMode.setEnabled(editorView, this.commentModeEnabled);
   }
 
   private moveCursorOutsideComment(editor: Editor): void {
@@ -101,11 +95,9 @@ export default class SimpleEditorialPlugin extends Plugin {
   }
 
   private syncModeToView(view: MarkdownView): void {
-    const editorView = this.getEditorView(view);
-    if (editorView) this.commentMode.setEnabled(editorView, this.commentModeEnabled);
     const action = this.ensureModeAction(view);
-    const state = this.commentModeEnabled ? "ON" : "OFF";
-    action.setAttribute("aria-label", `Simple Editorial: Comment Mode ${state}`);
+    const state = this.commentModeEnabled ? "on" : "off";
+    action.setAttribute("aria-label", `Simple Editorial: Comment mode ${state}`);
     action.setAttribute("aria-pressed", String(this.commentModeEnabled));
     action.setAttribute("data-tooltip-position", "bottom");
     action.classList.toggle("is-enabled", this.commentModeEnabled);
@@ -118,7 +110,7 @@ export default class SimpleEditorialPlugin extends Plugin {
 
     const action = view.addAction(
       "message-square-more",
-      "Simple Editorial: Comment Mode OFF",
+      "Simple Editorial: Comment mode off",
       (event) => {
         protectEditorSelection(event);
         this.toggleCommentMode(view);
@@ -135,8 +127,12 @@ export default class SimpleEditorialPlugin extends Plugin {
     this.modeActions.delete(view);
   }
 
-  private getEditorView(view: MarkdownView): EditorView | null {
-    const editor = view.editor as Editor & { cm?: EditorView };
-    return editor.cm ?? null;
+  private refreshEditorExtensions(): void {
+    this.editorExtensions.length = 0;
+    this.editorExtensions.push(
+      createCommentModeExtension({
+        isEnabled: () => this.commentModeEnabled,
+      }),
+    );
   }
 }

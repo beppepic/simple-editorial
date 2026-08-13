@@ -1,14 +1,22 @@
-:root {
+.theme-light .cm-editor.simple-editorial-editor,
+.theme-light .simple-editorial-mode-action {
   --simple-editorial-color: #c64a3d;
 }
 
-.markdown-source-view.mod-cm6 .cm-line:not(.HyperMD-codeblock) .cm-comment,
-.markdown-source-view.mod-cm6 .cm-strikethrough,
-.markdown-source-view.mod-cm6 .cm-formatting-strikethrough {
+.theme-dark .cm-editor.simple-editorial-editor,
+.theme-dark .simple-editorial-mode-action {
+  --simple-editorial-color: #de5e4e;
+}
+
+.cm-editor.simple-editorial-editor
+  .cm-line:not(.HyperMD-codeblock)
+  .cm-comment,
+.cm-editor.simple-editorial-editor .cm-strikethrough,
+.cm-editor.simple-editorial-editor .cm-formatting-strikethrough {
   color: var(--simple-editorial-color);
 }
 
-.markdown-source-view.mod-cm6 .cm-strikethrough {
+.cm-editor.simple-editorial-editor .cm-strikethrough {
   text-decoration-color: var(--simple-editorial-color);
 }
 
@@ -16,6 +24,6 @@
   color: var(--simple-editorial-color);
 }
 
-.simple-editorial-comment-mode .cm-cursor {
+.cm-editor.simple-editorial-editor.simple-editorial-comment-mode .cm-cursor {
   border-left-color: var(--simple-editorial-color);
 }
