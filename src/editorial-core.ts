@@ -17,6 +17,10 @@ export type CommentInputPlan =
   | { kind: "pass" }
   | { kind: "insert"; edit: TextEdit };
 
+export type ToggleCommentPlan =
+  | { kind: "apply" | "remove"; edit: TextEdit }
+  | { kind: "blocked" };
+
 const COMMENT_MARKER = "%%";
 
 function isWhitespace(character: string | undefined): boolean {
@@ -33,6 +37,24 @@ function isClosingPunctuation(character: string | undefined): boolean {
 
 function isOpeningPunctuation(character: string | undefined): boolean {
   return character !== undefined && /[([{“‘«]/u.test(character);
+}
+
+function findWordRangeAt(
+  document: string,
+  position: number,
+): { from: number; to: number } | null {
+  if (
+    !isWordCharacter(document[position - 1]) ||
+    !isWordCharacter(document[position])
+  ) {
+    return null;
+  }
+
+  let from = position;
+  let to = position;
+  while (from > 0 && isWordCharacter(document[from - 1])) from -= 1;
+  while (to < document.length && isWordCharacter(document[to])) to += 1;
+  return { from, to };
 }
 
 export function findCommentRanges(document: string): CommentBodyRange[] {
@@ -122,6 +144,106 @@ export function buildCommentEdit(
     insert,
     selectionFrom: cursor,
     selectionTo: cursor,
+  };
+}
+
+function unwrapCommentEdit(
+  document: string,
+  range: CommentBodyRange,
+  from: number,
+  to: number,
+): TextEdit {
+  const body = document.slice(range.bodyFrom, range.bodyTo);
+  const leadingSpace = body.startsWith(" ") ? 1 : 0;
+  const trailingSpace = body.endsWith(" ") && body.length > leadingSpace ? 1 : 0;
+  const content = body.slice(leadingSpace, body.length - trailingSpace);
+  const contentFrom = range.bodyFrom + leadingSpace;
+  let editFrom = range.markerFrom;
+  let editTo = range.markerTo;
+
+  if (content.length === 0) {
+    const previous = document[editFrom - 1];
+    const next = document[editTo];
+    if (previous === " " && next === " ") {
+      editTo += 1;
+    } else if (previous === " ") {
+      editFrom -= 1;
+    } else if (next === " ") {
+      editTo += 1;
+    }
+  }
+
+  const mapPosition = (position: number): number =>
+    editFrom +
+    Math.max(0, Math.min(content.length, position - contentFrom));
+
+  return {
+    from: editFrom,
+    to: editTo,
+    insert: content,
+    selectionFrom: mapPosition(from),
+    selectionTo: mapPosition(to),
+  };
+}
+
+export function planToggleComment(
+  document: string,
+  from: number,
+  to = from,
+): ToggleCommentPlan {
+  const ranges = findCommentRanges(document);
+  const enclosing = ranges.find((range) =>
+    from === to
+      ? from >= range.markerFrom && from <= range.markerTo
+      : from >= range.markerFrom && to <= range.markerTo,
+  );
+
+  if (enclosing) {
+    return {
+      kind: "remove",
+      edit: unwrapCommentEdit(document, enclosing, from, to),
+    };
+  }
+
+  const overlapsComment = ranges.some(
+    (range) => from < range.markerTo && to > range.markerFrom,
+  );
+  if (overlapsComment) return { kind: "blocked" };
+
+  if (from === to) {
+    const wordRange = findWordRangeAt(document, from);
+    if (wordRange) {
+      const selectedText = document.slice(wordRange.from, wordRange.to);
+      const prefix = `${COMMENT_MARKER} `;
+      const suffix = ` ${COMMENT_MARKER}`;
+      const cursor = wordRange.from + prefix.length + selectedText.length;
+      return {
+        kind: "apply",
+        edit: {
+          from: wordRange.from,
+          to: wordRange.to,
+          insert: `${prefix}${selectedText}${suffix}`,
+          selectionFrom: cursor,
+          selectionTo: cursor,
+        },
+      };
+    }
+
+    return { kind: "apply", edit: buildCommentEdit(document, from, "") };
+  }
+
+  const selectedText = document.slice(from, to);
+  const prefix = `${COMMENT_MARKER} `;
+  const suffix = ` ${COMMENT_MARKER}`;
+  return {
+    kind: "apply",
+    edit: {
+      from,
+      to,
+      insert: `${prefix}${selectedText}${suffix}`,
+      selectionFrom: from + prefix.length,
+      selectionTo: from + prefix.length + selectedText.length,
+    },
   };
 }
 

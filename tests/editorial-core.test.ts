@@ -5,6 +5,7 @@ import {
   buildCommentEdit,
   findCommentBodyAt,
   planCommentModeInput,
+  planToggleComment,
 } from "../src/editorial-core";
 import { protectEditorSelection } from "../src/ui-events";
 
@@ -38,6 +39,95 @@ test("preserves a word when inserting a comment inside it", () => {
   const document = "manuscript";
   const edit = buildCommentEdit(document, 4, "word choice");
   assert.equal(applyEdit(document, edit), "manu%% word choice %%script");
+});
+
+test("Toggle comment inserts an empty comment at the cursor", () => {
+  const document = "Before. After.";
+  const position = document.indexOf("After");
+  const plan = planToggleComment(document, position);
+  assert.equal(plan.kind, "apply");
+  if (plan.kind === "apply") {
+    assert.equal(applyEdit(document, plan.edit), "Before. %%  %% After.");
+    assert.equal(plan.edit.selectionFrom, plan.edit.selectionTo);
+  }
+});
+
+test("Toggle comment wraps and preserves selected text", () => {
+  const document = "Before selected after";
+  const from = document.indexOf("selected");
+  const to = from + "selected".length;
+  const plan = planToggleComment(document, from, to);
+  assert.equal(plan.kind, "apply");
+  if (plan.kind === "apply") {
+    assert.equal(applyEdit(document, plan.edit), "Before %% selected %% after");
+    assert.equal(
+      applyEdit(document, plan.edit).slice(
+        plan.edit.selectionFrom,
+        plan.edit.selectionTo,
+      ),
+      "selected",
+    );
+  }
+});
+
+test("Toggle comment wraps the whole word when the cursor is inside it", () => {
+  const document = "nota";
+  const plan = planToggleComment(document, 2);
+  assert.equal(plan.kind, "apply");
+  if (plan.kind === "apply") {
+    const updated = applyEdit(document, plan.edit);
+    assert.equal(updated, "%% nota %%");
+    assert.equal(updated.slice(0, plan.edit.selectionFrom), "%% nota");
+    assert.equal(plan.edit.selectionFrom, plan.edit.selectionTo);
+  }
+});
+
+test("Toggle comment does not capture a word at either boundary", () => {
+  const document = "nota";
+  const before = planToggleComment(document, 0);
+  const after = planToggleComment(document, document.length);
+  assert.equal(before.kind, "apply");
+  assert.equal(after.kind, "apply");
+  if (before.kind === "apply" && after.kind === "apply") {
+    assert.equal(applyEdit(document, before.edit), "%%  %% nota");
+    assert.equal(applyEdit(document, after.edit), "nota %%  %%");
+  }
+});
+
+test("Toggle comment removes markers without nesting comments", () => {
+  const document = "Before %% editorial note %% after";
+  const cursor = document.indexOf("note") + 2;
+  const plan = planToggleComment(document, cursor);
+  assert.equal(plan.kind, "remove");
+  if (plan.kind === "remove") {
+    assert.equal(applyEdit(document, plan.edit), "Before editorial note after");
+  }
+});
+
+test("Toggle comment includes the position immediately after the closing marker", () => {
+  const document = "%% editorial note %%";
+  const plan = planToggleComment(document, document.length);
+  assert.equal(plan.kind, "remove");
+  if (plan.kind === "remove") {
+    assert.equal(applyEdit(document, plan.edit), "editorial note");
+  }
+});
+
+test("Toggle comment removes an empty generated comment", () => {
+  const document = "Before %%  %% after";
+  const cursor = document.indexOf("  ") + 1;
+  const plan = planToggleComment(document, cursor);
+  assert.equal(plan.kind, "remove");
+  if (plan.kind === "remove") {
+    assert.equal(applyEdit(document, plan.edit), "Before after");
+  }
+});
+
+test("Toggle comment blocks selections crossing a comment boundary", () => {
+  const document = "Before %% note %% after";
+  assert.deepEqual(planToggleComment(document, 0, document.length), {
+    kind: "blocked",
+  });
 });
 
 test("finds single-line and multiline comment bodies", () => {
