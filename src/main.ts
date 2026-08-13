@@ -1,8 +1,8 @@
 import { Extension } from "@codemirror/state";
 import { Editor, MarkdownView, Notice, Plugin } from "obsidian";
 import {
-  buildCommentEdit,
   findCommentBodyAt,
+  planToggleComment,
 } from "./editorial-core";
 import { createCommentModeExtension } from "./comment-mode";
 import { protectEditorSelection } from "./ui-events";
@@ -18,9 +18,11 @@ export default class SimpleEditorialPlugin extends Plugin {
 
     this.addCommand({
       id: "insert-comment",
-      name: "Insert comment",
+      name: "Toggle comment",
       icon: "message-square-plus",
-      editorCallback: (editor) => this.insertComment(editor),
+      editorCallback: (editor, view) => {
+        if (view instanceof MarkdownView) this.toggleComment(editor, view);
+      },
     });
 
     this.addCommand({
@@ -49,17 +51,32 @@ export default class SimpleEditorialPlugin extends Plugin {
     this.modeActions.clear();
   }
 
-  private insertComment(editor: Editor): void {
-    if (editor.somethingSelected()) {
-      new Notice("Insert comment requires an empty selection.");
+  private toggleComment(editor: Editor, view: MarkdownView): void {
+    const from = editor.getCursor("from");
+    const to = editor.getCursor("to");
+    const plan = planToggleComment(
+      editor.getValue(),
+      editor.posToOffset(from),
+      editor.posToOffset(to),
+    );
+
+    if (plan.kind === "blocked") {
+      new Notice("Toggle comment cannot cross an existing comment.");
       return;
     }
 
-    const cursor = editor.getCursor();
-    const position = editor.posToOffset(cursor);
-    const edit = buildCommentEdit(editor.getValue(), position, "");
-    editor.replaceRange(edit.insert, cursor);
-    editor.setCursor(editor.offsetToPos(edit.selectionFrom));
+    editor.replaceRange(
+      plan.edit.insert,
+      editor.offsetToPos(plan.edit.from),
+      editor.offsetToPos(plan.edit.to),
+    );
+    view.contentEl.win.requestAnimationFrame(() => {
+      if (!view.contentEl.isConnected) return;
+      editor.setSelection(
+        editor.offsetToPos(plan.edit.selectionFrom),
+        editor.offsetToPos(plan.edit.selectionTo),
+      );
+    });
   }
 
   private toggleCommentMode(view: MarkdownView): void {
